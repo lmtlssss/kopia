@@ -1,0 +1,23 @@
+name: ZIP snapshot entry fidelity qualification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact source-only candidate
+        uses: actions/checkout@v4
+        with:
+          ref: fix-zip-restore-entry-fidelity-20261025
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Run ZIP empty-directory/symlink behavioral tests
+        run: go test -count=1 -run 'TestZipOutput(PreservesEmptyDirectory|PreservesSymlinkTargetWithoutFollowing|ReturnsSymlinkReadError|DirectoryLinkAndRegularFileCoexist)$' ./snapshot/restore
+      - name: Qualify entire restore package
+        run: go test -count=1 ./snapshot/restore
